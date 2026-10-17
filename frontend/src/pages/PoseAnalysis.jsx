@@ -1547,6 +1547,7 @@ import {
   ShieldCheck,
   Sparkles,
   Target,
+  TrendingUp,
   Video,
   Volume2,
   VolumeX,
@@ -1567,7 +1568,6 @@ const PoseAnalysis = () => {
   const streamRef = useRef(null);
   const canvasRef = useRef(null); // hidden canvas used only to grab frames
   const captureIntervalRef = useRef(null);
-  const sessionTokenRef = useRef(null); // GAP 1: stores the session_token from /pose/start
 
   const [selectedExercise, setSelectedExercise] =
     useState("squat");
@@ -1857,7 +1857,6 @@ const PoseAnalysis = () => {
       const response = await api.post("/pose/analyze_frame", {
         image: imageData,
         exercise: selectedExercise,
-        session_token: sessionTokenRef.current,   // GAP 1: forward per-session token
       });
 
       const { annotated_image, metrics, ai_live_summary } = response.data;
@@ -1921,11 +1920,17 @@ const PoseAnalysis = () => {
     try {
       setLoading(true);
 
-      // GAP 1: call /pose/start first to register the session and get a token
-      const startResp = await api.post("/pose/start", {
-        exercise: selectedExercise,
-      });
-      sessionTokenRef.current = startResp.data.session_token || null;
+      const response = await api.post(
+        "/pose/analyze_frame",
+        {
+          exercise: selectedExercise,
+        }
+      );
+
+      console.log(
+        "Pose analysis started:",
+        response.data
+      );
 
       setAnalysisRunning(true);
       setElapsedTime(0);
@@ -1952,7 +1957,12 @@ const PoseAnalysis = () => {
         error
       );
 
-      // Fallback: start the capture loop even if /pose/start failed
+      /*
+        During frontend development you can temporarily
+        comment out the API error handling if your Flask
+        endpoint is not ready yet.
+      */
+
       setAnalysisRunning(true);
       setBodyStatus("Detecting");
       setFeedback("AI पोज़ विश्लेषण चालू है।");
@@ -1985,11 +1995,13 @@ const PoseAnalysis = () => {
         {
           exercise: selectedExercise,
           duration: elapsedTime,
-          session_token: sessionTokenRef.current,   // GAP 1: send token so backend closes the right session
         }
       );
 
-      sessionTokenRef.current = null; // clear after stop
+      console.log(
+        "Session result:",
+        response.data
+      );
 
       setSessionResult(
         response.data

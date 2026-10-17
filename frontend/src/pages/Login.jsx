@@ -35,11 +35,12 @@ const Login = () => {
 
   const handleMobileSubmit = async (data) => {
     try {
-      await api.post("/login", {
+      const response = await api.post("/login", {
         mobile: data.mobile,
       });
 
-      // fix #19: do not log API responses — they may contain sensitive data
+      console.log(response.data);
+
       setMobileNumber(data.mobile);
       setShowOtp(true);
 
@@ -65,7 +66,8 @@ const Login = () => {
         otp: data.otp,
       });
 
-      // fix #19: access_token must not be printed to the console
+      console.log(response.data);
+
       const token = response.data.access_token;
 
       localStorage.setItem("token", token);
@@ -93,13 +95,13 @@ const Login = () => {
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
 
         {/* Cyan glow */}
-        <div className="absolute -left-40 -top-40 h-[500px] w-[500px] rounded-full bg-cyan-500/10 blur-[130px] anim-float" />
+        <div className="absolute -left-40 -top-40 h-[500px] w-[500px] rounded-full bg-cyan-500/10 blur-[130px]" />
 
         {/* Blue glow */}
-        <div className="absolute -right-40 top-[10%] h-[600px] w-[600px] rounded-full bg-blue-600/10 blur-[150px] anim-float" style={{ animationDelay: "2s" }} />
+        <div className="absolute -right-40 top-[10%] h-[600px] w-[600px] rounded-full bg-blue-600/10 blur-[150px]" />
 
         {/* Purple glow */}
-        <div className="absolute bottom-[-250px] left-[35%] h-[500px] w-[500px] rounded-full bg-purple-600/10 blur-[140px] anim-float" style={{ animationDelay: "4s" }} />
+        <div className="absolute bottom-[-250px] left-[35%] h-[500px] w-[500px] rounded-full bg-purple-600/10 blur-[140px]" />
 
         {/* Grid */}
         <div
@@ -118,7 +120,7 @@ const Login = () => {
 
       <main className="relative z-10 flex min-h-screen items-center justify-center px-5 py-10">
 
-        <div className="anim-scale-in grid w-full max-w-6xl overflow-hidden rounded-[32px] border border-white/10 bg-white/[0.035] shadow-[0_30px_100px_rgba(0,0,0,0.5)] backdrop-blur-2xl lg:grid-cols-2">
+        <div className="grid w-full max-w-6xl overflow-hidden rounded-[32px] border border-white/10 bg-white/[0.035] shadow-[0_30px_100px_rgba(0,0,0,0.5)] backdrop-blur-2xl lg:grid-cols-2">
 
           {/* =====================================================
               LEFT SIDE
@@ -138,9 +140,9 @@ const Login = () => {
                 BRAND
             ================================================= */}
 
-            <div className="anim-fade-down d-1 relative z-10 flex items-center gap-3">
+            <div className="relative z-10 flex items-center gap-3">
 
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-500 text-slate-950 shadow-lg shadow-cyan-500/20 transition duration-300 hover:scale-110 hover:rotate-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-500 text-slate-950 shadow-lg shadow-cyan-500/20">
                 <Activity size={25} />
               </div>
 
@@ -160,7 +162,7 @@ const Login = () => {
                 HERO
             ================================================= */}
 
-            <div className="anim-fade-up d-2 relative z-10">
+            <div className="relative z-10">
 
               <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2 text-xs font-semibold text-cyan-300">
                 <Sparkles size={14} />
@@ -189,29 +191,23 @@ const Login = () => {
 
               <div className="mt-8 space-y-3">
 
-                <div className="anim-fade-left d-3">
-                  <Feature
-                    icon={<Camera size={18} />}
-                    title="Camera-Based Analysis"
-                    text="Analyze body movement using your camera"
-                  />
-                </div>
+                <Feature
+                  icon={<Camera size={18} />}
+                  title="Camera-Based Analysis"
+                  text="Analyze body movement using your camera"
+                />
 
-                <div className="anim-fade-left d-4">
-                  <Feature
-                    icon={<Target size={18} />}
-                    title="Posture Detection"
-                    text="Identify incorrect body alignment"
-                  />
-                </div>
+                <Feature
+                  icon={<Target size={18} />}
+                  title="Posture Detection"
+                  text="Identify incorrect body alignment"
+                />
 
-                <div className="anim-fade-left d-5">
-                  <Feature
-                    icon={<Zap size={18} />}
-                    title="Real-Time Feedback"
-                    text="Improve your form while exercising"
-                  />
-                </div>
+                <Feature
+                  icon={<Zap size={18} />}
+                  title="Real-Time Feedback"
+                  text="Improve your form while exercising"
+                />
 
               </div>
 
@@ -266,7 +262,7 @@ const Login = () => {
                 HEADER
             ================================================= */}
 
-            <div className="anim-fade-up d-2 mb-8">
+            <div className="mb-8">
 
               <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1.5 text-xs font-semibold text-cyan-300">
 
@@ -302,7 +298,7 @@ const Login = () => {
 
               <form
                 onSubmit={handleSubmit(handleMobileSubmit)}
-                className="anim-fade-up d-3 space-y-6"
+                className="space-y-6"
               >
 
                 <div>
@@ -427,7 +423,7 @@ const Login = () => {
 
               <form
                 onSubmit={handleSubmit(handleOtpSubmit)}
-                className="anim-scale-in space-y-6"
+                className="space-y-6"
               >
 
                 {/* Number */}
@@ -559,7 +555,7 @@ const Login = () => {
                 CAPABILITIES
             ================================================= */}
 
-            <div className="anim-fade-up d-5 mt-10 grid grid-cols-3 gap-2">
+            <div className="mt-10 grid grid-cols-3 gap-2">
 
               <MiniFeature
                 icon={<Camera size={15} />}

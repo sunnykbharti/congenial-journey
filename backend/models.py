@@ -172,3 +172,47 @@ class MovementRepLog(db.Model):
             'min_angle':  self.min_angle,
             'timestamp':  self.timestamp.isoformat() if self.timestamp else None,
         }
+
+
+# ─────────────────────────────────────────────────────────
+# 4. GAME SESSION (PosePlay movement games)
+# ─────────────────────────────────────────────────────────
+
+class GameSession(db.Model):
+    __tablename__ = 'game_sessions'
+
+    id                      = db.Column(db.Integer, primary_key=True)
+    user_id                 = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+
+    game_type               = db.Column(db.String(50), nullable=False, default='reach_and_collect')
+    play_mode               = db.Column(db.String(20), nullable=False, default='standing')  # standing | seated
+    selected_hand           = db.Column(db.String(20), nullable=False, default='right')     # left | right | either
+    configuration_version   = db.Column(db.String(20), nullable=False, default='1.0')
+
+    started_at              = db.Column(db.DateTime, default=datetime.utcnow)
+    ended_at                = db.Column(db.DateTime, nullable=True)
+    active_duration_seconds = db.Column(db.Float,   default=0.0)
+
+    score                   = db.Column(db.Integer, default=0)
+    targets_collected       = db.Column(db.Integer, default=0)
+    tracking_interruptions  = db.Column(db.Integer, default=0)
+
+    # Idempotency token to prevent duplicate saves from rapid retries or double submits
+    idempotency_key         = db.Column(db.String(64), unique=True, index=True, nullable=True)
+
+    def to_dict(self):
+        return {
+            'id':                      self.id,
+            'user_id':                 self.user_id,
+            'game_type':               self.game_type,
+            'play_mode':               self.play_mode,
+            'selected_hand':           self.selected_hand,
+            'configuration_version':   self.configuration_version,
+            'started_at':              self.started_at.isoformat() if self.started_at else None,
+            'ended_at':                self.ended_at.isoformat() if self.ended_at else None,
+            'active_duration_seconds': round(self.active_duration_seconds, 1),
+            'score':                   self.score,
+            'targets_collected':       self.targets_collected,
+            'tracking_interruptions':  self.tracking_interruptions,
+            'idempotency_key':         self.idempotency_key,
+        }

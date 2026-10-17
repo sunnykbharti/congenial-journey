@@ -1,5 +1,3 @@
-import secrets
-import os
 from datetime import datetime, timedelta
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
@@ -7,18 +5,10 @@ from models import db, User
 
 auth_bp = Blueprint('auth', __name__)
 
-# In-memory OTP store.
-# Key: mobile string
-# Value: {"otp": str, "expires_at": datetime, "attempts": int}
-# NOTE: For multi-worker / production deployments replace with Redis or a DB table.
+# Temporary in-memory OTP store for demonstration
+# Key: mobile string, Value: {"otp": str, "expires_at": datetime}
+# For production, replace this with Redis or a dedicated OTP table
 OTP_STORE = {}
-
-# fix #4: brute-force limits
-OTP_MAX_ATTEMPTS = 5          # wrong guesses before lockout
-OTP_LOCKOUT_MINUTES = 15      # how long the lockout lasts
-
-# Dev mode: print OTP to console instead of sending SMS
-_IS_DEV = os.getenv('FLASK_ENV', 'development') == 'development'
 
 
 @auth_bp.route('/api/login', methods=['POST'])
@@ -36,25 +26,21 @@ def login():
     if not otp:
         # Check if user exists with this phone number
         user = User.query.filter_by(phone=mobile).first()
-
+        
+        # Optionally auto-create a user if signing up on the fly, or reject unassigned numbers:
         if not user:
             return jsonify({"message": "Mobile number not registered in the system"}), 404
 
-        # fix #1: generate a cryptographically random 6-digit OTP
-        generated_otp = str(secrets.randbelow(900000) + 100000)
+        # Generate OTP (Hardcoded '123456' for development/testing)
+        generated_otp = "123456"
         expires_at = datetime.utcnow() + timedelta(minutes=5)
 
         OTP_STORE[mobile] = {
             "otp": generated_otp,
-            "expires_at": expires_at,
-            "attempts": 0,          # fix #4: track wrong guesses
-            "locked_until": None,   # fix #4: lockout timestamp
+            "expires_at": expires_at
         }
 
-        # TODO: Integrate SMS gateway here (e.g., Fast2SMS, Twilio)
-        # In dev mode log the OTP so the app is still usable without SMS
-        if _IS_DEV:
-            print(f"[auth] DEV OTP for {mobile}: {generated_otp}")
+        # TODO: Integrate SMS gateway service here (e.g., Fast2SMS, Twilio)
 
         return jsonify({
             "message": "OTP sent successfully",
@@ -73,21 +59,11 @@ def login():
     if not record:
         return jsonify({"message": "No OTP requested for this number. Please try again."}), 400
 
-    # fix #4: check lockout before anything else
-    if record.get("locked_until") and datetime.utcnow() < record["locked_until"]:
-        remaining = int((record["locked_until"] - datetime.utcnow()).total_seconds() / 60) + 1
-        return jsonify({"message": f"Too many incorrect attempts. Try again in {remaining} minute(s)."}), 429
-
     if datetime.utcnow() > record["expires_at"]:
         OTP_STORE.pop(mobile, None)
         return jsonify({"message": "OTP has expired. Please request a new one."}), 400
 
     if record["otp"] != otp:
-        # fix #4: increment attempt counter and lock if threshold hit
-        record["attempts"] = record.get("attempts", 0) + 1
-        if record["attempts"] >= OTP_MAX_ATTEMPTS:
-            record["locked_until"] = datetime.utcnow() + timedelta(minutes=OTP_LOCKOUT_MINUTES)
-            return jsonify({"message": f"Too many incorrect attempts. Account locked for {OTP_LOCKOUT_MINUTES} minutes."}), 429
         return jsonify({"message": "Invalid OTP. Please check and try again."}), 401
 
     # Clear used OTP
